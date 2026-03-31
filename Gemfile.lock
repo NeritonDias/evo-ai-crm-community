@@ -332,6 +332,8 @@ GEM
       activesupport (>= 5.0.0)
     jmespath (1.6.2)
     json (2.12.0)
+    json_refs (0.1.9)
+      hana
     json_schemer (0.2.24)
       ecma-re-validator (~> 0.3)
       hana (~> 1.3)
@@ -1006,6 +1008,7 @@ DEPENDENCIES
   image_processing
   iso-639
   jbuilder
+  json_refs (~> 0.1.9)
   json_schemer
   judoscale-rails
   judoscale-sidekiq
