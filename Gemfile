@@ -248,3 +248,5 @@ gem "lz4-ruby", "~> 0.3.3"
 gem "opentelemetry-sdk", "~> 1.10"
 gem "opentelemetry-exporter-otlp", "~> 0.31.1"
 gem "opentelemetry-instrumentation-all", "~> 0.90.1"
+
+gem "json_refs", "~> 0.1.9"

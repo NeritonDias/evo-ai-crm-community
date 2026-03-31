@@ -1064,6 +1064,14 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.index ["type"], name: "index_roles_on_type"
   end
 
+  create_table "runtime_configs", force: :cascade do |t|
+    t.string "key", null: false
+    t.text "value", default: "", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_runtime_configs_on_key", unique: true
+  end
+
   create_table "scheduled_action_execution_logs", force: :cascade do |t|
     t.bigint "scheduled_action_id", null: false
     t.uuid "account_id", null: false
