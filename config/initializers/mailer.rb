@@ -49,7 +49,7 @@ Rails.application.configure do
     config.after_initialize do
       begin
         # Load configurations from GlobalConfig (database) - highest priority
-        bms_api_key = GlobalConfigService.load('BMS_API_KEY', nil) if defined?(GlobalConfigService)
+        bms_api_key = GlobalConfigService.load('BMS_API_SECRET', nil) if defined?(GlobalConfigService)
         resend_api_key = GlobalConfigService.load('RESEND_API_KEY', nil) if defined?(GlobalConfigService)
         resend_api_key ||= ENV['RESEND_API_KEY']  # Fallback to ENV
 

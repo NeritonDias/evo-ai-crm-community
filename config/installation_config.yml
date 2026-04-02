@@ -317,11 +317,11 @@
   value:
   locked: false
   description: 'Evolution API URL'
-- name: EVOLUTION_ADMIN_TOKEN
-  display_title: 'Evolution Admin Token'
+- name: EVOLUTION_ADMIN_SECRET
+  display_title: 'Evolution Admin Secret'
   value:
   locked: false
-  description: 'Evolution Admin Token'
+  description: 'Evolution admin API secret key'
   type: secret
 ## ------ End of Configs added for Evolution ------ ##
 
@@ -331,22 +331,22 @@
   value:
   locked: false
   description: 'Evolution Go API URL'
-- name: EVOLUTION_GO_ADMIN_TOKEN
-  display_title: 'Evolution Go Admin Token'
+- name: EVOLUTION_GO_ADMIN_SECRET
+  display_title: 'Evolution Go Admin Secret'
   value:
   locked: false
-  description: 'Evolution Go Admin Token'
+  description: 'Evolution Go admin API secret key'
   type: secret
 - name: EVOLUTION_GO_INSTANCE_ID
   display_title: 'Evolution Go Instance ID'
   value:
   locked: false
   description: 'Evolution Go Instance ID'
-- name: EVOLUTION_GO_INSTANCE_TOKEN
-  display_title: 'Evolution Go Instance Token'
+- name: EVOLUTION_GO_INSTANCE_SECRET
+  display_title: 'Evolution Go Instance Secret'
   value:
   locked: false
-  description: 'Evolution Go Instance Token'
+  description: 'Evolution Go instance API secret key'
   type: secret
 ## ------ End of Configs added for Evolution Go ------ ##
 
@@ -356,11 +356,11 @@
   value: 'https://api.openai.com/v1'
   locked: false
   description: 'OpenAI API URL'
-- name: OPENAI_API_KEY
-  display_title: 'OpenAI API Key'
+- name: OPENAI_API_SECRET
+  display_title: 'OpenAI API Secret'
   value:
   locked: false
-  description: 'OpenAI API Key'
+  description: 'OpenAI API secret key'
   type: secret
 - name: OPENAI_MODEL
   display_title: 'OpenAI Model'
@@ -450,11 +450,11 @@
 ## ------ End of Configs added for Google OAuth ------ ##
 
 ## ------ Configs added for BMS ------ ##
-- name: BMS_API_KEY
-  display_title: 'BMS API Key'
+- name: BMS_API_SECRET
+  display_title: 'BMS API Secret'
   value:
   locked: false
-  description: 'BMS API Key'
+  description: 'BMS API secret key'
   type: secret
 - name: BMS_IPPOOL
   display_title: 'BMS IP Pool'
