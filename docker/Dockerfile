@@ -78,14 +78,14 @@ COPY . /app
 # https://github.com/evolution/evolution/issues/701
 RUN mkdir -p /app/log
 
-# generate production assets if production environment
+# clean up non-production files
 RUN if [ "$RAILS_ENV" = "production" ]; then \
-  SECRET_KEY_BASE=precompile_placeholder RAILS_LOG_TO_STDOUT=enabled bundle exec rake assets:precompile \
-  && rm -rf spec node_modules tmp/cache; \
+  rm -rf spec node_modules tmp/cache; \
   fi
 
-# Generate .git_sha file with current commit hash
-RUN git rev-parse HEAD > /app/.git_sha
+# Write git SHA to file (passed as build arg, falls back to "unknown")
+ARG GIT_SHA="unknown"
+RUN echo "${GIT_SHA}" > /app/.git_sha
 
 # Remove unnecessary files
 RUN rm -rf /gems/ruby/3.4.0/cache/*.gem \

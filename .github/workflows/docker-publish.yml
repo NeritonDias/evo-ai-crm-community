@@ -49,6 +49,7 @@ jobs:
             RAILS_ENV=production
             BUNDLE_WITHOUT=development:test
             RAILS_SERVE_STATIC_FILES=true
+            GIT_SHA=${{ github.sha }}
           outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true
           cache-from: type=gha,scope=${{ matrix.platform }}
           cache-to: type=gha,scope=${{ matrix.platform }},mode=max
