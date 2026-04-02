@@ -29,6 +29,11 @@ Rails.application.routes.draw do
   get '/api', to: 'api#index'
   namespace :api, defaults: { format: 'json' } do
     namespace :v1 do
+      namespace :admin do
+        get 'app_configs/:config_type', to: 'app_configs#show', as: :app_config
+        post 'app_configs/:config_type', to: 'app_configs#create', as: :app_configs
+      end
+
       resource :global_config, controller: 'global_config', only: [:show]
       namespace :integrations do
         namespace :google_calendar do

@@ -73,7 +73,7 @@ class Api::V1::GlobalConfigController < Api::BaseController
 
   def openai_configured?
     api_url = GlobalConfigService.load('OPENAI_API_URL', '').to_s.strip
-    api_key = GlobalConfigService.load('OPENAI_API_KEY', '').to_s.strip
+    api_key = GlobalConfigService.load('OPENAI_API_SECRET', '').to_s.strip
     model = GlobalConfigService.load('OPENAI_MODEL', '').to_s.strip
 
     api_url.present? && api_key.present? && model.present?
@@ -81,14 +81,14 @@ class Api::V1::GlobalConfigController < Api::BaseController
 
   def evolution_configured?
     api_url = GlobalConfigService.load('EVOLUTION_API_URL', '').to_s.strip
-    admin_token = GlobalConfigService.load('EVOLUTION_ADMIN_TOKEN', '').to_s.strip
+    admin_token = GlobalConfigService.load('EVOLUTION_ADMIN_SECRET', '').to_s.strip
 
     api_url.present? && admin_token.present?
   end
 
   def evolution_go_configured?
     api_url = GlobalConfigService.load('EVOLUTION_GO_API_URL', '').to_s.strip
-    admin_token = GlobalConfigService.load('EVOLUTION_GO_ADMIN_TOKEN', '').to_s.strip
+    admin_token = GlobalConfigService.load('EVOLUTION_GO_ADMIN_SECRET', '').to_s.strip
 
     api_url.present? && admin_token.present?
   end
