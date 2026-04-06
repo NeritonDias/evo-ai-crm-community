@@ -455,6 +455,33 @@
   type: secret
 ## ------ End of Configs added for Evolution Go ------ ##
 
+## ------ Configs added for Twitter Channel ------ ##
+- name: TWITTER_APP_ID
+  display_title: 'Twitter App ID'
+  value:
+  locked: false
+  description: 'Twitter application ID'
+  type: text
+- name: TWITTER_CONSUMER_KEY
+  display_title: 'Twitter Consumer Key'
+  value:
+  locked: false
+  description: 'Twitter API consumer key'
+  type: text
+- name: TWITTER_CONSUMER_SECRET
+  display_title: 'Twitter Consumer Secret'
+  value:
+  locked: false
+  description: 'Twitter API consumer secret'
+  type: secret
+- name: TWITTER_ENVIRONMENT
+  display_title: 'Twitter Environment'
+  value:
+  locked: false
+  description: 'Twitter API environment label (e.g., production)'
+  type: text
+## ------ End of Configs added for Twitter Channel ------ ##
+
 ## ------ Configs added for OpenAI ------ ##
 - name: OPENAI_API_URL
   display_title: 'OpenAI API URL'
