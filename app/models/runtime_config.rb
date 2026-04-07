@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: runtime_configs
+#
+#  id         :bigint           not null, primary key
+#  key        :string           not null
+#  value      :text             default(""), not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_runtime_configs_on_key  (key) UNIQUE
+#
 class RuntimeConfig < ApplicationRecord
   validates :key, presence: true, uniqueness: true
   validates :value, presence: true
