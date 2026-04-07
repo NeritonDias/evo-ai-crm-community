@@ -22,7 +22,7 @@ RSpec.describe Api::V1::GlobalConfigController, type: :controller do
         fbAppId fbApiVersion wpAppId wpApiVersion wpWhatsappConfigId
         instagramAppId googleOAuthClientId azureAppId
         hasEvolutionConfig hasEvolutionGoConfig openaiConfigured
-        enableAccountSignup recaptchaSiteKey clarityProjectId whitelabel
+        enableAccountSignup recaptchaSiteKey clarityProjectId
       ]
 
       expected_keys.each do |key|
@@ -127,46 +127,6 @@ RSpec.describe Api::V1::GlobalConfigController, type: :controller do
         get :show, format: :json
         json = JSON.parse(response.body)
         expect(json['enableAccountSignup']).to be false
-      end
-    end
-
-    context 'whitelabel config' do
-      it 'returns whitelabel disabled when WHITELABEL_ENABLED is false' do
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_ENABLED', 'false').and_return('false')
-
-        get :show, format: :json
-        json = JSON.parse(response.body)
-        expect(json['whitelabel']).to eq({ 'enabled' => false })
-      end
-
-      it 'returns full whitelabel object when enabled' do
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_ENABLED', 'false').and_return('true')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_LOGO_LIGHT', '/brand-assets/logo.svg').and_return('/custom/logo.svg')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_LOGO_DARK', '/brand-assets/logo_dark.svg').and_return('/custom/logo_dark.svg')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_FAVICON', nil).and_return('/custom/favicon.ico')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_COMPANY_NAME', nil).and_return('Acme Corp')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_SYSTEM_NAME', nil).and_return('Acme Platform')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_TERMS_OF_SERVICE_URL', nil).and_return('https://acme.com/tos')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_PRIVACY_POLICY_URL', nil).and_return('https://acme.com/privacy')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_PRIMARY_COLOR_LIGHT', '#00d4aa').and_return('#ff0000')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_PRIMARY_FOREGROUND_LIGHT', '#ffffff').and_return('#000000')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_PRIMARY_COLOR_DARK', '#00ffcc').and_return('#00ff00')
-        allow(GlobalConfigService).to receive(:load).with('WHITELABEL_PRIMARY_FOREGROUND_DARK', '#000000').and_return('#ffffff')
-
-        get :show, format: :json
-        json = JSON.parse(response.body)
-        wl = json['whitelabel']
-
-        expect(wl['enabled']).to be true
-        expect(wl['logo']['light']).to eq('/custom/logo.svg')
-        expect(wl['logo']['dark']).to eq('/custom/logo_dark.svg')
-        expect(wl['favicon']).to eq('/custom/favicon.ico')
-        expect(wl['companyName']).to eq('Acme Corp')
-        expect(wl['systemName']).to eq('Acme Platform')
-        expect(wl['termsOfServiceUrl']).to eq('https://acme.com/tos')
-        expect(wl['privacyPolicyUrl']).to eq('https://acme.com/privacy')
-        expect(wl['colors']['light']['primary']).to eq('#ff0000')
-        expect(wl['colors']['dark']['primary']).to eq('#00ff00')
       end
     end
   end
