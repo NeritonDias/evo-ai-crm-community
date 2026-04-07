@@ -28,12 +28,7 @@ class Api::V1::GlobalConfigController < Api::BaseController
       enableAccountSignup: enable_account_signup?,
       recaptchaSiteKey: GlobalConfigService.load('RECAPTCHA_SITE_KEY', nil),
       clarityProjectId: GlobalConfigService.load('CLARITY_PROJECT_ID', nil),
-      whitelabel: whitelabel_config
     }
-  end
-
-  def whitelabel_config
-    { enabled: false }
   end
 
   def enable_account_signup?
