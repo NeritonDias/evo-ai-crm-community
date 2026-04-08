@@ -160,6 +160,16 @@ class Api::V1::Evolution::InstancesController < Api::V1::BaseController
     Rails.logger.info "Evolution API: Logout response code: #{response.code}"
     Rails.logger.info "Evolution API: Logout response body: #{response.body}"
 
+    # 400 "not connected" or 500 "Connection Closed" = already disconnected, treat as success
+    if response.code == '400' || response.code == '500'
+      body = JSON.parse(response.body) rescue {}
+      messages = Array(body.dig('response', 'message')).join(' ')
+      if messages.include?('not connected') || messages.include?('Connection Closed')
+        Rails.logger.info "Evolution API: Instance already disconnected (#{response.code}), treating as successful logout"
+        return { status: 'SUCCESS', already_disconnected: true }
+      end
+    end
+
     raise "Failed to logout instance. Status: #{response.code}, Body: #{response.body}" unless response.is_a?(Net::HTTPSuccess)
 
     JSON.parse(response.body)
