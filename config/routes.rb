@@ -362,6 +362,7 @@ Rails.application.routes.draw do
         resources :qrcodes, only: [:create, :show], controller: 'evolution/qrcodes'
         resources :proxies, only: [:create, :show], controller: 'evolution/proxies'
         resources :settings, only: [:create, :show, :update], controller: 'evolution/settings'
+        resources :privacy, only: [:show, :update], controller: 'evolution/privacy'
         resources :instances, only: [:index], controller: 'evolution/instances' do
           member do
             delete :logout

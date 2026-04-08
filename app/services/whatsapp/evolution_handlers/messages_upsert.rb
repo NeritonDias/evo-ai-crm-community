@@ -52,7 +52,13 @@ module Whatsapp::EvolutionHandlers::MessagesUpsert
 
   def set_contact
     push_name = contact_name
-    source_id = phone_number_from_jid
+    raw_source_id = phone_number_from_jid
+
+    # Always normalize Brazilian numbers to the 9-digit format.
+    # processed_waid only helps when a contact_inbox already exists; it misses contacts
+    # created manually in the CRM (Contact record exists, but no ContactInbox yet).
+    # By normalizing unconditionally, find_contact_by_phone_number can also match them.
+    source_id = brazil_phone_number?(raw_source_id) ? normalised_brazil_mobile_number(raw_source_id) : raw_source_id
 
     contact_inbox = ::ContactInboxWithContactBuilder.new(
       source_id: source_id,
@@ -67,7 +73,11 @@ module Whatsapp::EvolutionHandlers::MessagesUpsert
     @contact = contact_inbox.contact
 
     # Update contact name if it was just the phone number
-    @contact.update!(name: push_name) if @contact.name == source_id && push_name.present?
+    @contact.update!(name: push_name) if @contact.name == raw_source_id && push_name.present?
+  end
+
+  def phone_number_string?(value)
+    value.present? && value.match?(/^\+?\d{7,15}$/)
   end
 
   def handle_create_message
