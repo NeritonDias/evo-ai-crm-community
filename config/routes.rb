@@ -557,6 +557,8 @@ Rails.application.routes.draw do
 
       resource :notification_subscriptions, only: [:create, :destroy]
 
+      resources :user_tours, only: [:index, :create, :destroy], param: :tour_key
+
       namespace :widget do
         resource :direct_uploads, only: [:create]
         resource :config, only: [:create]
