@@ -325,7 +325,10 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224901) do
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "hmac_verified", default: false
     t.string "pubsub_token"
+    t.text "bsuid"
+    t.text "whatsapp_username"
     t.index ["contact_id"], name: "index_contact_inboxes_on_contact_id"
+    t.index ["inbox_id", "bsuid"], name: "index_contact_inboxes_on_inbox_id_and_bsuid", unique: true, where: "(bsuid IS NOT NULL)"
     t.index ["inbox_id", "source_id"], name: "index_contact_inboxes_on_inbox_id_and_source_id", unique: true
     t.index ["inbox_id"], name: "index_contact_inboxes_on_inbox_id"
     t.index ["pubsub_token"], name: "index_contact_inboxes_on_pubsub_token", unique: true
@@ -1319,6 +1322,17 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224901) do
     t.datetime "update_time", precision: nil, null: false
   end
 
+  create_table "user_tours", force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.string "tour_key", null: false
+    t.string "status", default: "completed", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "tour_key"], name: "index_user_tours_on_user_id_and_tour_key", unique: true
+    t.index ["user_id"], name: "index_user_tours_on_user_id"
+  end
+
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "provider", default: "email", null: false
     t.string "uid", default: "", null: false
@@ -1437,4 +1451,5 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224901) do
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
   add_foreign_key "user_roles", "users", column: "granted_by_id"
+  add_foreign_key "user_tours", "users"
 end
