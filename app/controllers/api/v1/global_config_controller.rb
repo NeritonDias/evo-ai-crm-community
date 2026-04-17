@@ -22,8 +22,12 @@ class Api::V1::GlobalConfigController < Api::BaseController
       azureAppId: GlobalConfigService.load('AZURE_APP_ID', nil),
       # 🔒 SECURITY: Don't expose sensitive API URLs to frontend
       # Frontend only needs to know IF config exists, not the actual values
-      hasEvolutionConfig: evolution_configured?,
-      hasEvolutionGoConfig: evolution_go_configured?,
+      hasFacebookConfig: IntegrationRequirements.configured?('facebook'),
+      hasWhatsappConfig: IntegrationRequirements.configured?('whatsapp'),
+      hasInstagramConfig: IntegrationRequirements.configured?('instagram'),
+      hasEvolutionConfig: IntegrationRequirements.configured?('evolution'),
+      hasEvolutionGoConfig: IntegrationRequirements.configured?('evolution_go'),
+      hasTwitterConfig: IntegrationRequirements.configured?('twitter'),
       openaiConfigured: openai_configured?,
       enableAccountSignup: enable_account_signup?,
       recaptchaSiteKey: GlobalConfigService.load('RECAPTCHA_SITE_KEY', nil),
@@ -43,19 +47,5 @@ class Api::V1::GlobalConfigController < Api::BaseController
     model = GlobalConfigService.load('OPENAI_MODEL', '').to_s.strip
 
     api_url.present? && api_key.present? && model.present?
-  end
-
-  def evolution_configured?
-    api_url = GlobalConfigService.load('EVOLUTION_API_URL', '').to_s.strip
-    admin_token = GlobalConfigService.load('EVOLUTION_ADMIN_SECRET', '').to_s.strip
-
-    api_url.present? && admin_token.present?
-  end
-
-  def evolution_go_configured?
-    api_url = GlobalConfigService.load('EVOLUTION_GO_API_URL', '').to_s.strip
-    admin_token = GlobalConfigService.load('EVOLUTION_GO_ADMIN_SECRET', '').to_s.strip
-
-    api_url.present? && admin_token.present?
   end
 end

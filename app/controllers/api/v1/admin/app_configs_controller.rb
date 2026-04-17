@@ -41,6 +41,10 @@ module Api
           'frontend_runtime' => %w[RECAPTCHA_SITE_KEY CLARITY_PROJECT_ID]
         }.freeze
 
+        # Required-key enforcement: see `IntegrationRequirements` for the per-integration
+        # map. Kept centralized so `GlobalConfigController#show` reports the same truth
+        # via `hasXxxConfig` booleans.
+
         def show
           config_type = params[:config_type]
           allowed_keys = CONFIG_TYPES[config_type]
@@ -54,6 +58,9 @@ module Api
           config_type = params[:config_type]
           allowed_keys = CONFIG_TYPES[config_type]
           return config_type_not_found unless allowed_keys
+
+          missing = missing_required_keys(config_type, allowed_keys)
+          return missing_required_response(missing) if missing.any?
 
           save_configs(allowed_keys)
           configs = build_config_response(allowed_keys)
@@ -118,6 +125,40 @@ module Api
             ApiErrorCodes::INVALID_PARAMETER,
             "Unknown config type: #{params[:config_type]}",
             status: :not_found
+          )
+        end
+
+        # Returns the list of required keys whose effective value (incoming param or
+        # existing DB value) would remain blank after the save.
+        #
+        # Payload convention: `save_configs` treats `nil` on a `_SECRET` key as
+        # "preserve the existing DB value" — the frontend sends `nil` when the
+        # admin didn't modify a secret field. So for required-check purposes we
+        # must fall back to the stored value (DB or ENV) in that case, otherwise
+        # every re-save with an untouched secret reports it as missing.
+        def missing_required_keys(config_type, allowed_keys)
+          required = IntegrationRequirements.required_keys(config_type)
+          return [] if required.empty?
+
+          incoming = params.fetch(:app_config, {}).permit(*allowed_keys).to_h
+
+          required.select do |key|
+            effective =
+              if !incoming.key?(key) || (incoming[key].nil? && key.end_with?('_SECRET'))
+                GlobalConfigService.load(key, nil)
+              else
+                incoming[key]
+              end
+            effective.to_s.strip.empty?
+          end
+        end
+
+        def missing_required_response(missing)
+          error_response(
+            ApiErrorCodes::MISSING_REQUIRED_FIELD,
+            "Missing required configuration: #{missing.join(', ')}",
+            details: { missing: missing },
+            status: :bad_request
           )
         end
       end
