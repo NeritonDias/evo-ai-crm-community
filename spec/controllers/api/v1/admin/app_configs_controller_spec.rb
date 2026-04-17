@@ -237,7 +237,10 @@ RSpec.describe Api::V1::Admin::AppConfigsController, type: :controller do
 
           post :create, params: {
             config_type: 'evolution',
-            app_config: { EVOLUTION_API_URL: 'https://api.example.com' }
+            app_config: {
+              EVOLUTION_API_URL: 'https://api.example.com',
+              EVOLUTION_ADMIN_SECRET: 'secret-xyz'
+            }
           }, format: :json
 
           expect(response).to have_http_status(:ok)
@@ -262,6 +265,100 @@ RSpec.describe Api::V1::Admin::AppConfigsController, type: :controller do
           expect(response).to have_http_status(:unprocessable_entity).or have_http_status(:bad_request)
           body = JSON.parse(response.body)
           expect(body['success']).to be false
+        end
+      end
+
+      context 'with required keys enforcement' do
+        # Exercises `IntegrationRequirements::CONFIG_TYPE_REQUIRED_KEYS` end-to-end:
+        # blank payload + empty DB rejects, omitted + populated DB accepts (partial
+        # update), and full payload persists.
+        integrations = {
+          'facebook' => {
+            required: %w[FB_APP_ID FB_APP_SECRET FB_VERIFY_TOKEN],
+            full: { FB_APP_ID: 'fb-1', FB_APP_SECRET: 'fb-secret', FB_VERIFY_TOKEN: 'fb-token' }
+          },
+          'whatsapp' => {
+            required: %w[WP_APP_ID WP_APP_SECRET WP_VERIFY_TOKEN WP_WHATSAPP_CONFIG_ID],
+            full: { WP_APP_ID: 'wp-1', WP_APP_SECRET: 'wp-secret', WP_VERIFY_TOKEN: 'wp-token',
+                    WP_WHATSAPP_CONFIG_ID: 'cfg-1' }
+          },
+          'instagram' => {
+            required: %w[INSTAGRAM_APP_ID INSTAGRAM_APP_SECRET INSTAGRAM_VERIFY_TOKEN],
+            full: { INSTAGRAM_APP_ID: 'ig-1', INSTAGRAM_APP_SECRET: 'ig-secret',
+                    INSTAGRAM_VERIFY_TOKEN: 'ig-token' }
+          },
+          'evolution' => {
+            required: %w[EVOLUTION_API_URL EVOLUTION_ADMIN_SECRET],
+            full: { EVOLUTION_API_URL: 'https://api.example.com', EVOLUTION_ADMIN_SECRET: 'ev-secret' }
+          },
+          'evolution_go' => {
+            required: %w[EVOLUTION_GO_API_URL EVOLUTION_GO_ADMIN_SECRET],
+            full: { EVOLUTION_GO_API_URL: 'https://go.example.com', EVOLUTION_GO_ADMIN_SECRET: 'go-secret' }
+          },
+          'twitter' => {
+            required: %w[TWITTER_APP_ID TWITTER_CONSUMER_KEY TWITTER_CONSUMER_SECRET TWITTER_ENVIRONMENT],
+            full: { TWITTER_APP_ID: 'tw-1', TWITTER_CONSUMER_KEY: 'tw-key',
+                    TWITTER_CONSUMER_SECRET: 'tw-secret', TWITTER_ENVIRONMENT: 'dev' }
+          }
+        }
+
+        integrations.each do |config_type, data|
+          context "for #{config_type}" do
+            let(:required_keys) { data[:required] }
+            let(:full_payload) { data[:full] }
+            let(:first_required) { required_keys.first }
+            let(:rest_required) { required_keys[1..] }
+
+            before do
+              InstallationConfig.where(name: required_keys).delete_all
+            end
+
+            it 'rejects save when a required key is blank in payload and unset in db' do
+              payload = full_payload.dup
+              payload[first_required.to_sym] = ''
+
+              post :create, params: { config_type: config_type, app_config: payload }, format: :json
+
+              expect(response).to have_http_status(:bad_request)
+              body = JSON.parse(response.body)
+              expect(body['success']).to be false
+              expect(body['error']['code']).to eq('MISSING_REQUIRED_FIELD')
+              expect(body['error']['details']['missing']).to include(first_required)
+              # Rejected atomically — partial payload must not persist either key
+              expect(InstallationConfig.where(name: required_keys)).to be_empty
+            end
+
+            it 'rejects save when a required key is omitted and unset in db' do
+              payload = full_payload.reject { |k, _| k.to_s == first_required }
+
+              post :create, params: { config_type: config_type, app_config: payload }, format: :json
+
+              expect(response).to have_http_status(:bad_request)
+              body = JSON.parse(response.body)
+              expect(body['error']['details']['missing']).to include(first_required)
+            end
+
+            it 'accepts partial updates when omitted required keys already have values in db' do
+              required_keys.each do |key|
+                InstallationConfig.create!(name: key, serialized_value: { 'value' => "existing-#{key.downcase}" })
+              end
+
+              post :create, params: {
+                config_type: config_type,
+                app_config: { rest_required.first => 'updated-value' }
+              }, format: :json
+
+              expect(response).to have_http_status(:ok)
+            end
+
+            it 'accepts save when all required keys are provided' do
+              post :create, params: { config_type: config_type, app_config: full_payload }, format: :json
+
+              expect(response).to have_http_status(:ok)
+              expect(InstallationConfig.find_by(name: first_required).value)
+                .to eq(full_payload[first_required.to_sym])
+            end
+          end
         end
       end
     end
