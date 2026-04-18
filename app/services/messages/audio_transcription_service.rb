@@ -104,8 +104,12 @@ class Messages::AudioTranscriptionService
     return false unless openai_hook&.enabled?
     return false unless openai_hook.settings&.[]('enable_audio_transcription') == true
 
-    # Check if OpenAI API key is configured
-    openai_hook.settings&.[]('api_key').present?
+    # Check if auth is configured (either API key or OAuth)
+    if openai_hook.settings&.[]('auth_method') == 'oauth'
+      openai_hook.settings&.[]('oauth_key_id').present?
+    else
+      openai_hook.settings&.[]('api_key').present?
+    end
   end
 
   def transcribe_audio
@@ -146,6 +150,19 @@ class Messages::AudioTranscriptionService
       return nil
     end
 
+    # Priority 2a: Check if hook uses OAuth
+    if openai_hook.settings&.[]('auth_method') == 'oauth'
+      oauth_key_id = openai_hook.settings&.[]('oauth_key_id')
+      if oauth_key_id.present?
+        token = fetch_oauth_token(oauth_key_id)
+        if token.present?
+          Rails.logger.info "AudioTranscriptionService: Using OAuth token for OpenAI"
+          return token
+        end
+      end
+    end
+
+    # Priority 2b: Use static API key from hook
     api_key = openai_hook.settings&.[]('api_key')
     if api_key.present?
       Rails.logger.info "AudioTranscriptionService: Using hook OpenAI API key"
@@ -153,6 +170,34 @@ class Messages::AudioTranscriptionService
       Rails.logger.warn "AudioTranscriptionService: OpenAI hook exists but API key is not configured"
     end
     api_key
+  end
+
+  def fetch_oauth_token(key_id)
+    processor_url = ENV.fetch('EVO_AI_CORE_SERVICE_URL', ENV.fetch('AI_PROCESSOR_URL', 'http://evo-processor:8000'))
+    api_token = ENV.fetch('EVOAI_CRM_API_TOKEN', '')
+
+    uri = URI("#{processor_url}/api/v1/agents/oauth/codex/internal/token/#{key_id}")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == 'https'
+    http.open_timeout = 10
+    http.read_timeout = 10
+
+    request = Net::HTTP::Post.new(uri.path)
+    request['x-api-token'] = api_token
+    request['Content-Type'] = 'application/json'
+
+    response = http.request(request)
+
+    if response.code == '200'
+      data = JSON.parse(response.body)
+      data['access_token']
+    else
+      Rails.logger.error "AudioTranscriptionService: OAuth token fetch failed: #{response.code} - #{response.body}"
+      nil
+    end
+  rescue StandardError => e
+    Rails.logger.error "AudioTranscriptionService: OAuth token fetch error: #{e.message}"
+    nil
   end
 
   def download_audio_file
@@ -255,4 +300,3 @@ class Messages::AudioTranscriptionService
     nil
   end
 end
-
