@@ -106,6 +106,28 @@ class FilterService
     ]
   end
 
+  def pipeline_filter_query(query_hash, current_index)
+    table_name = filter_config[:table_name]
+    query_operator = query_hash[:query_operator]
+    @filter_values["value_#{current_index}"] = query_hash['values']
+
+    base_relation_query =
+      "SELECT 1 FROM pipeline_items WHERE pipeline_items.conversation_id = #{table_name}.id"
+    id_filter =
+      "AND pipeline_items.pipeline_id IN (:value_#{current_index})"
+
+    case query_hash[:filter_operator]
+    when 'equal_to'
+      "EXISTS (#{base_relation_query} #{id_filter}) #{query_operator}"
+    when 'not_equal_to'
+      "NOT EXISTS (#{base_relation_query} #{id_filter}) #{query_operator}"
+    when 'is_present'
+      "EXISTS (#{base_relation_query}) #{query_operator}"
+    when 'is_not_present'
+      "NOT EXISTS (#{base_relation_query}) #{query_operator}"
+    end
+  end
+
   def tag_filter_query(query_hash, current_index)
     model_name = filter_config[:entity]
     table_name = filter_config[:table_name]
@@ -195,15 +217,40 @@ class FilterService
   end
 
   def query_builder(model_filters)
-    @params[:payload].each_with_index do |query_hash, current_index|
-      @query_string += " #{build_condition_query(model_filters, query_hash, current_index).strip}"
+    rows = filter_payload
+    clauses = rows.each_with_index.map do |query_hash, current_index|
+      raw = build_condition_query(model_filters, query_hash, current_index).strip
+      # Existing per-attribute handlers emit the query_operator as a trailing
+      # suffix of their own clause, which produces invalid SQL when clauses
+      # are concatenated (e.g. "cond_0  cond_1 AND"). Strip any trailing
+      # AND/OR here so the connector can be injected deterministically below.
+      raw.sub(/\s+(AND|OR)\s*\z/i, '').strip
     end
+
+    return base_relation if clauses.empty?
+
+    @query_string = clauses.first
+    clauses[1..].each_with_index do |clause, i|
+      row = rows[i + 1]
+      op = row.nil? ? nil : (row[:query_operator] || row['query_operator'])
+      connector = (op.presence || 'AND').to_s.upcase
+      @query_string += " #{connector} #{clause}"
+    end
+
     base_relation.where(@query_string, @filter_values.with_indifferent_access)
   end
 
   def validate_query_operator
-    @params[:payload].each do |query_hash|
+    filter_payload.each do |query_hash|
       validate_single_condition(query_hash)
     end
+  end
+
+  # Backward-compat: accept either `payload` (upstream Chatwoot) or `filters`
+  # (evo frontend) as the filter rows key. Returns [] if neither is present
+  # so a malformed request produces a clean empty result rather than
+  # NoMethodError.
+  def filter_payload
+    @params[:payload].presence || @params[:filters].presence || []
   end
 end
